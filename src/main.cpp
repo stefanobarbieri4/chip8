@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "chip8.h"
 
 int main()
@@ -8,7 +10,13 @@ int main()
 
     chip8.loadTestProgram();
 
-    chip8.cycle();
+    for (int i = 1; i <= 6; i++)
+    {
+
+        std::cout << "Cycle: " << i << '\n';
+        chip8.cycle();
+        std::cout << '\n';
+    }
 
     return 0;
 }
