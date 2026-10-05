@@ -49,10 +49,31 @@ Chip8::Chip8()
     {
         memory[i] = font[i];
     }
+
+    waitingForKey = false;
+    waitingRegister = 0;
 }
 
 void Chip8::cycle()
 {
+
+    if (waitingForKey)
+    {
+
+        for (int i = 0; i < 16; i++)
+        {
+            if (keypad[i] == 1)
+            {
+                V[waitingRegister] = i;
+                waitingForKey = false;
+                pc += 2;
+                return;
+            }
+        }
+    }
+
+    return;
+
     // FETCH
 
     uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
@@ -289,13 +310,16 @@ void Chip8::cycle()
         break;
 
     case 0xC:
+    {
         uint8_t random_number = rand() % 0x100;
 
         V[x] = random_number & kk;
         std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
         break;
+    }
 
     case 0xD:
+    {
         uint8_t x_coord = V[x] % 64;
         uint8_t y_coord = V[y] % 32;
 
@@ -320,27 +344,66 @@ void Chip8::cycle()
 
                 if (pixel & (0x80 >> col))
                 {
+
+                    if (display[x_coord + col][y_coord + row] == 1)
+                    {
+                        V[0xF] = 1;
+                    }
+
                     display[x_coord + col][y_coord + row] ^= 1;
                 }
             }
         }
         break;
+    }
 
-    case 0xF:
-
+    case 0xE:
+    {
         switch (kk)
         {
+        case 0x9E:
+            if (keypad[V[x]] == 1)
+            {
+                pc += 2;
+            }
+
+            break;
+
+        case 0xA1:
+            if (keypad[V[x]] == 0)
+            {
+                pc += 2;
+            }
+        }
+    }
+
+    case 0xF:
+    {
+        switch (kk)
+        {
+
+        case 0x0A:
+
+            waitingForKey = true;
+            waitingRegister = x;
+            pc -= 2;
+
+            break;
+
         case 0x1E:
             I += V[x];
             break;
 
         case 0x29:
+        {
             constexpr uint16_t FONT_START = 0x00;
 
             I = FONT_START + V[x] * 0x5; // location of font at V[x] - works because of how the font is loaded from 0x0 - 0x50
             break;
+        }
 
         case 0x33:
+        {
             uint16_t val = V[x];
             uint16_t hundreds = val / 100;
             uint16_t tens = (val / 10) % 10;
@@ -350,6 +413,7 @@ void Chip8::cycle()
             memory[I + 1] = tens;
             memory[I + 2] = ones;
             break;
+        }
 
         case 0x55:
             for (int i = 0; i <= x; i++)
@@ -364,8 +428,48 @@ void Chip8::cycle()
             {
                 V[i] = memory[I + i];
             }
+
+            break;
         }
     }
+    }
+}
+
+void Chip8::loadDrawTest()
+{
+    // Sprite:
+    //
+    // 11110000
+    // 10010000
+    // 10010000
+    // 11110000
+    //
+    // This looks roughly like a square/0.
+
+    memory[0x300] = 0xF0;
+    memory[0x301] = 0x90;
+    memory[0x302] = 0x90;
+    memory[0x303] = 0xF0;
+
+    // I = 0x300
+    memory[0x200] = 0xA3;
+    memory[0x201] = 0x00;
+
+    // V0 = 5 (X coordinate)
+    memory[0x202] = 0x60;
+    memory[0x203] = 0x05;
+
+    // V1 = 3 (Y coordinate)
+    memory[0x204] = 0x61;
+    memory[0x205] = 0x03;
+
+    // Draw sprite at (V0, V1), 4 rows high
+    memory[0x206] = 0xD0;
+    memory[0x207] = 0x14;
+
+    // Delete sprite
+    memory[0x208] = 0xD0;
+    memory[0x209] = 0x14;
 }
 
 void Chip8::loadTestProgram()
@@ -416,5 +520,22 @@ void Chip8::loadROM(const std::string &rom)
     if (file.read(buffer.data(), size))
     {
         std::copy(buffer.begin(), buffer.end(), &memory[0x200]);
+    }
+}
+
+void Chip8::debuggingDisplay()
+{
+    int rows = sizeof(display) / sizeof(display[0]);
+    int cols = sizeof(display) / (rows * sizeof(display[0][0]));
+
+    for (int y = 0; y < cols; y++)
+    {
+        for (int x = 0; x < rows; x++)
+        {
+            char res = display[x][y] ? '#' : ' ';
+            std::cout << res;
+        }
+
+        std::cout << '\n';
     }
 }

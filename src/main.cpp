@@ -8,7 +8,7 @@ int main()
 
     // chip8.loadROM("")
 
-    chip8.loadTestProgram();
+    chip8.loadDrawTest();
 
     for (int i = 1; i <= 6; i++)
     {
@@ -17,6 +17,9 @@ int main()
         chip8.cycle();
         std::cout << '\n';
     }
+
+    std::cout << "Display:\n\n";
+    chip8.debuggingDisplay();
 
     return 0;
 }

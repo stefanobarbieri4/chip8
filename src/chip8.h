@@ -23,10 +23,15 @@ private:
     uint16_t I;
     uint16_t pc;
 
+    bool waitingForKey;
+    uint8_t waitingRegister;
+
 public:
     Chip8();
 
     void cycle();
     void loadTestProgram();
+    void loadDrawTest();
+    void debuggingDisplay();
     void loadROM(const std::string &rom);
 };
