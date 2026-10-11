@@ -59,30 +59,27 @@ void Chip8::cycle()
 
     if (waitingForKey)
     {
-
-        for (int i = 0; i < 16; i++)
+        for (uint8_t i = 0; i < 16; ++i)
         {
-            if (keypad[i] == 1)
+            if (keypad[i] != 0)
             {
                 V[waitingRegister] = i;
                 waitingForKey = false;
-                pc += 2;
-                return;
+                break;
             }
         }
-    }
 
-    return;
+        if (waitingForKey)
+        {
+            return;
+        }
+    }
 
     // FETCH
 
     uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
 
     pc += 2;
-
-    std::cout << "PC: 0x" << std::hex << pc << '\n';
-
-    std::cout << "Opcode: 0x" << std::hex << opcode << '\n';
 
     // DECODE
     uint16_t first_nibble = opcode >> 12;
@@ -108,11 +105,9 @@ void Chip8::cycle()
             break;
 
         case 0x0EE:
-            pc = stack[sp];
             sp--;
+            pc = stack[sp];
 
-            std::cout << "PC: 0x" << std::hex << pc << '\n';
-            std::cout << "SP: 0x" << std::hex << static_cast<int>(sp) << '\n';
             break;
         }
 
@@ -121,16 +116,13 @@ void Chip8::cycle()
     case 0x1:
         pc = nnn;
 
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
         break;
 
     case 0x2:
-        sp++;
         stack[sp] = pc;
+        sp++;
         pc = nnn;
 
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
-        std::cout << "SP: 0x" << std::hex << static_cast<int>(sp) << '\n';
         break;
 
     case 0x3:
@@ -139,7 +131,6 @@ void Chip8::cycle()
             pc += 2;
         }
 
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
         break;
 
     case 0x4:
@@ -148,7 +139,6 @@ void Chip8::cycle()
             pc += 2;
         }
 
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
         break;
 
     case 0x5:
@@ -163,17 +153,16 @@ void Chip8::cycle()
             pc += 2;
         }
 
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
         break;
 
     case 0x6:
         V[x] = kk;
-        std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
+
         break;
 
     case 0x7:
         V[x] += kk;
-        std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
+
         break;
 
     case 0x8:
@@ -182,25 +171,21 @@ void Chip8::cycle()
         case 0x0:
             V[x] = V[y];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x1:
             V[x] = V[x] | V[y];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x2:
             V[x] = V[x] & V[y];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x3:
             V[x] = V[x] ^ V[y];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x4:
@@ -217,7 +202,6 @@ void Chip8::cycle()
 
             V[x] = temp & 0xFF;
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x5:
@@ -232,7 +216,6 @@ void Chip8::cycle()
 
             V[x] -= V[y];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x6:
@@ -247,7 +230,6 @@ void Chip8::cycle()
 
             V[x] >>= 1;
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0x7:
@@ -262,7 +244,6 @@ void Chip8::cycle()
 
             V[x] = V[y] - V[x];
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         case 0xE:
@@ -277,7 +258,6 @@ void Chip8::cycle()
             }
             V[x] <<= 1;
 
-            std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
             break;
 
         default:
@@ -296,7 +276,6 @@ void Chip8::cycle()
         if (V[x] != V[y])
         {
             pc += 2;
-            std::cout << "PC: 0x" << std::hex << pc << '\n';
         }
         break;
 
@@ -306,7 +285,7 @@ void Chip8::cycle()
 
     case 0xB:
         pc = nnn + V[0];
-        std::cout << "PC: 0x" << std::hex << pc << '\n';
+
         break;
 
     case 0xC:
@@ -314,7 +293,7 @@ void Chip8::cycle()
         uint8_t random_number = rand() % 0x100;
 
         V[x] = random_number & kk;
-        std::cout << "V" << std::hex << x << " = 0x" << std::hex << static_cast<int>(V[x]) << '\n';
+
         break;
     }
 
@@ -375,6 +354,8 @@ void Chip8::cycle()
                 pc += 2;
             }
         }
+
+        break;
     }
 
     case 0xF:
@@ -382,11 +363,18 @@ void Chip8::cycle()
         switch (kk)
         {
 
+        case 0x7:
+            V[x] = delayTimer;
+            break;
+
+        case 0x15:
+            delayTimer = V[x];
+            break;
+
         case 0x0A:
 
             waitingForKey = true;
             waitingRegister = x;
-            pc -= 2;
 
             break;
 
@@ -432,6 +420,7 @@ void Chip8::cycle()
             break;
         }
     }
+    break;
     }
 }
 
@@ -517,9 +506,13 @@ void Chip8::loadROM(const std::string &rom)
     std::vector<char> buffer(size);
 
     // Load bytes into memory from 0x200 to 0xFFF
-    if (file.read(buffer.data(), size))
+    if (file.read(buffer.data(), size) || file.gcount() == size)
     {
         std::copy(buffer.begin(), buffer.end(), &memory[0x200]);
+    }
+    else
+    {
+        throw std::runtime_error("Failed to read complete ROM file: " + rom);
     }
 }
 

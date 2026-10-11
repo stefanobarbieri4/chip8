@@ -1,2 +1,4 @@
 *.exe
 roms/
+src/lib/
+SDL3.dll
